@@ -121,4 +121,37 @@ Matrix<X> solve(const InequalityConstrainedProblem<X, P, M>& problem, const Matr
     return x;
 }
 
+template <int X, int P, int M>
+Matrix<X> solve_strictly_feasible(const InequalityConstrainedProblem<X, P, M>& problem, const Matrix<X>& initial_guess)
+{
+    Matrix<X + 1> phase_one_initial_guess;
+
+    phase_one_initial_guess.template view<0, X, 0, 1>() = initial_guess;
+    phase_one_initial_guess(X) = 1.0;
+
+    auto residuals = problem.inequality_constraints(initial_guess);
+
+    for (int i = 0; i < M; ++i)
+    {
+        phase_one_initial_guess(X) = std::max(phase_one_initial_guess(X), residuals(i));
+    }
+
+    InequalityConstrainedProblem<X + 1, P, M> phase_one_problem;
+
+    phase_one_problem.objective = [](const Matrix<X + 1>& x)
+    {
+        Matrix<1> cost;
+        cost(0) = x(X);
+        return cost;
+    };
+
+    phase_one_problem.equality_constraints = [&problem](const Matrix<X + 1>& x)
+    { return problem.equality_constraints(x.template view<0, X, 0, 1>()); };
+
+    phase_one_problem.inequality_constraints = [&problem](const Matrix<X + 1>& x)
+    { return problem.inequality_constraints(x.template view<0, X, 0, 1>()) - x(X); };
+
+    return solve(phase_one_problem, phase_one_initial_guess).template view<0, X, 0, 1>();
+}
+
 }  // namespace tiny_sqp_solver

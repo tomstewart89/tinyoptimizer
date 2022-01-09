@@ -158,6 +158,50 @@ TEST(Solve, LuksanVlcek1)
     }
 }
 
+TEST(Solve, HockSchittkowsky71)
+{
+    InequalityConstrainedProblem<4, 1, 9> problem;
+
+    problem.objective = [](const Matrix<4>& x)
+    {
+        Matrix<1> cost;
+        cost(0) = x(0) * x(3) * (x(0) + x(1) + x(2)) + x(2);
+        return cost;
+    };
+
+    problem.equality_constraints = [](const Matrix<4>& x)
+    {
+        Matrix<1> residuals;
+        residuals(0) = x(0) * x(0) + x(1) * x(1) + x(2) * x(2) + x(3) * x(3) - 40;
+
+        return residuals;
+    };
+
+    problem.inequality_constraints = [](const Matrix<4>& x)
+    {
+        Matrix<9> residuals;
+
+        for (int i = 0; i < 4; ++i)
+        {
+            residuals(i * 2) = x(i) - 5;
+            residuals(i * 2 + 1) = -x(i) + 1;
+        }
+
+        residuals(8) = -x(0) * x(1) * x(2) * x(3) + 25;
+
+        return residuals;
+    };
+
+    Matrix<4> initial_guess = solve_strictly_feasible(problem, Matrix<4>{1, 5, 5, 1});
+
+    auto x_star = solve(problem, initial_guess);
+
+    EXPECT_NEAR(x_star(0), 1.0, 1e-2);
+    EXPECT_NEAR(x_star(1), 4.742, 1e-2);
+    EXPECT_NEAR(x_star(2), 3.821, 1e-2);
+    EXPECT_NEAR(x_star(3), 1.379, 1e-2);
+}
+
 int main(int argc, char** argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
