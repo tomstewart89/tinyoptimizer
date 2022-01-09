@@ -77,4 +77,48 @@ Matrix<X> solve(const EqualityConstrainedProblem<X, P>& problem, const Matrix<X>
     return x;
 }
 
+template <int X, int P, int M>
+struct InequalityConstrainedProblem
+{
+    std::function<Matrix<1>(const Matrix<X>&)> objective;
+    std::function<Matrix<P>(const Matrix<X>&)> equality_constraints;
+    std::function<Matrix<M>(const Matrix<X>&)> inequality_constraints;
+};
+
+template <int X, int P, int M>
+Matrix<X> solve(const InequalityConstrainedProblem<X, P, M>& problem, const Matrix<X>& initial_guess)
+{
+    const double epsilon = 1e-3;
+    const double mu = 1.25;
+    const double t0 = 0.25;
+    double t = t0;
+
+    Matrix<X> x = initial_guess;
+
+    EqualityConstrainedProblem<X, P> barrier_problem;
+
+    barrier_problem.objective = [&t, &problem](const Matrix<X>& x)
+    {
+        auto cost = problem.objective(x) * t;
+
+        auto residuals = problem.inequality_constraints(x);
+
+        for (int i = 0; i < M; ++i)
+        {
+            cost(0) -= std::log(-residuals(i));
+        }
+
+        return cost;
+    };
+
+    barrier_problem.constraints = problem.equality_constraints;
+
+    for (; t < M / epsilon; t *= mu)
+    {
+        x = solve(barrier_problem, x);
+    }
+
+    return x;
+}
+
 }  // namespace tiny_sqp_solver
