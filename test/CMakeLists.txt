@@ -21,8 +21,11 @@ target_link_libraries(test_matrix gtest_main)
 add_executable(test_lu_decompose test_lu_decompose.cpp)
 target_link_libraries(test_lu_decompose gtest_main)
 
+add_executable(test_solve test_solve.cpp)
+target_link_libraries(test_solve gtest_main)
 
 include(GoogleTest)
 
 gtest_discover_tests(test_matrix)
 gtest_discover_tests(test_lu_decompose)
+gtest_discover_tests(test_solve)
