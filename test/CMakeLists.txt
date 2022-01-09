@@ -15,4 +15,9 @@ enable_testing()
 
 include_directories("${PROJECT_SOURCE_DIR}" "${PROJECT_SOURCE_DIR}/..")
 
+add_executable(test_matrix test_matrix.cpp)
+target_link_libraries(test_matrix gtest_main)
+
 include(GoogleTest)
+
+gtest_discover_tests(test_matrix)
