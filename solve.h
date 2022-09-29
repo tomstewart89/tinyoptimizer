@@ -1,12 +1,11 @@
-#include <sstream>
-
 #include "finite_difference.h"
 #include "lu_decompose.h"
 
 namespace tiny_sqp_solver
 {
+
 template <int X, int P>
-struct EqualityConstrainedQuadraticProblem
+struct LinearQuadraticApproximation
 {
     Matrix<X, X> Q;
     Matrix<X> c;
@@ -14,8 +13,23 @@ struct EqualityConstrainedQuadraticProblem
     Matrix<P> Ax_b;
 };
 
+template <int DecisionVars, int EqualityConstraints, int InequalityConstraints>
+struct Problem
+{
+    virtual Matrix<1> objective(const Matrix<DecisionVars>& x) const = 0;
+
+    virtual Matrix<EqualityConstraints> equality_constraints(const Matrix<DecisionVars>& x) const
+    {
+        return Zeros<EqualityConstraints>();
+    }
+    virtual Matrix<InequalityConstraints> inequality_constraints(const Matrix<DecisionVars>& x) const
+    {
+        return Zeros<InequalityConstraints>();
+    }
+};
+
 template <int X, int P>
-Matrix<X> solve(const EqualityConstrainedQuadraticProblem<X, P>& problem)
+Matrix<X> solve(const LinearQuadraticApproximation<X, P>& problem)
 {
     Matrix<X + P, X + P> KKT;
     Matrix<X + P> kkt;
@@ -30,39 +44,27 @@ Matrix<X> solve(const EqualityConstrainedQuadraticProblem<X, P>& problem)
 
     auto decomp = lu_decompose(KKT);
 
-    if (decomp.singular)
-    {
-        std::stringstream strm;
-        strm << "KKT matrix was singular: KKT = " << KKT;
-        throw std::runtime_error(strm.str());
-    }
-
     return lu_solve(decomp, kkt).template view<0, X, 0, 1>();
 }
 
 template <int X, int P>
-struct EqualityConstrainedProblem
-{
-    std::function<Matrix<1>(const Matrix<X>&)> objective;
-    std::function<Matrix<P>(const Matrix<X>&)> constraints;
-};
-
-template <int X, int P>
-Matrix<X> solve(const EqualityConstrainedProblem<X, P>& problem, const Matrix<X>& initial_guess)
+Matrix<X> solve(const Problem<X, P, 0>& problem, const Matrix<X>& initial_guess)
 {
     const double step_size = 0.25;
     const double tolerance = 1e-3;
     const int max_iterations = 100;
 
     Matrix<X> x = initial_guess;
+    MemberFunction<X, 1, Problem<X, P, 0>> objective(&Problem<X, P, 0>::objective, problem);
+    MemberFunction<X, P, Problem<X, P, 0>> constraints(&Problem<X, P, 0>::equality_constraints, problem);
 
     for (int i = 0; i < max_iterations; ++i)
     {
-        EqualityConstrainedQuadraticProblem<X, P> local_approximation;
-        local_approximation.c = differentiate<X, 1>(problem.objective, x);
-        local_approximation.Q = twice_differentiate<X>(problem.objective, x);
-        local_approximation.A = differentiate<X, P>(problem.constraints, x);
-        local_approximation.Ax_b = problem.constraints(x);
+        LinearQuadraticApproximation<X, P> local_approximation;
+        local_approximation.c = differentiate<X, 1>(objective, x);
+        local_approximation.Q = twice_differentiate<X>(objective, x);
+        local_approximation.A = differentiate<X, P>(constraints, x);
+        local_approximation.Ax_b = constraints(x);
 
         auto newton_step = solve(local_approximation);
 
@@ -78,30 +80,19 @@ Matrix<X> solve(const EqualityConstrainedProblem<X, P>& problem, const Matrix<X>
 }
 
 template <int X, int P, int M>
-struct InequalityConstrainedProblem
+class BarrierProblem : public Problem<X, P, 0>
 {
-    std::function<Matrix<1>(const Matrix<X>&)> objective;
-    std::function<Matrix<P>(const Matrix<X>&)> equality_constraints;
-    std::function<Matrix<M>(const Matrix<X>&)> inequality_constraints;
-};
+   public:
+    const Problem<X, P, M>& problem_;
+    double t;
 
-template <int X, int P, int M>
-Matrix<X> solve(const InequalityConstrainedProblem<X, P, M>& problem, const Matrix<X>& initial_guess)
-{
-    const double epsilon = 1e-3;
-    const double mu = 1.25;
-    const double t0 = 0.25;
-    double t = t0;
+    BarrierProblem(const Problem<X, P, M>& problem) : problem_(problem) {}
 
-    Matrix<X> x = initial_guess;
-
-    EqualityConstrainedProblem<X, P> barrier_problem;
-
-    barrier_problem.objective = [&t, &problem](const Matrix<X>& x)
+    Matrix<1> objective(const Matrix<X>& x) const override
     {
-        auto cost = problem.objective(x) * t;
+        auto cost = problem_.objective(x) * t;
 
-        auto residuals = problem.inequality_constraints(x);
+        auto residuals = problem_.inequality_constraints(x);
 
         for (int i = 0; i < M; ++i)
         {
@@ -109,11 +100,23 @@ Matrix<X> solve(const InequalityConstrainedProblem<X, P, M>& problem, const Matr
         }
 
         return cost;
-    };
+    }
 
-    barrier_problem.constraints = problem.equality_constraints;
+    Matrix<P> equality_constraints(const Matrix<X>& x) const override { return problem_.equality_constraints(x); }
+};
 
-    for (; t < M / epsilon; t *= mu)
+template <int X, int P, int M>
+Matrix<X> solve(const Problem<X, P, M>& problem, const Matrix<X>& initial_guess)
+{
+    const double epsilon = 1e-3;
+    const double mu = 1.25;
+    const double t0 = 0.25;
+
+    Matrix<X> x = initial_guess;
+
+    BarrierProblem<X, P, M> barrier_problem(problem);
+
+    for (barrier_problem.t = t0; barrier_problem.t < M / epsilon; barrier_problem.t *= mu)
     {
         x = solve(barrier_problem, x);
     }
@@ -122,7 +125,34 @@ Matrix<X> solve(const InequalityConstrainedProblem<X, P, M>& problem, const Matr
 }
 
 template <int X, int P, int M>
-Matrix<X> solve_strictly_feasible(const InequalityConstrainedProblem<X, P, M>& problem, const Matrix<X>& initial_guess)
+class PhaseOneProblem : public Problem<X + 1, P, M>
+{
+   public:
+    const Problem<X, P, M>& problem_;
+    double t;
+
+    PhaseOneProblem(const Problem<X, P, M>& problem) : problem_(problem) {}
+
+    Matrix<1> objective(const Matrix<X + 1>& x) const override
+    {
+        Matrix<1> cost;
+        cost(0) = x(X);
+        return cost;
+    }
+
+    Matrix<P> equality_constraints(const Matrix<X + 1>& x) const override
+    {
+        return problem_.equality_constraints(x.template view<0, X, 0, 1>());
+    }
+
+    Matrix<M> inequality_constraints(const Matrix<X + 1>& x) const override
+    {
+        return problem_.inequality_constraints(x.template view<0, X, 0, 1>()) - x(X);
+    }
+};
+
+template <int X, int P, int M>
+Matrix<X> solve_strictly_feasible(const Problem<X, P, M>& problem, const Matrix<X>& initial_guess)
 {
     Matrix<X + 1> phase_one_initial_guess;
 
@@ -136,22 +166,7 @@ Matrix<X> solve_strictly_feasible(const InequalityConstrainedProblem<X, P, M>& p
         phase_one_initial_guess(X) = std::max(phase_one_initial_guess(X), residuals(i));
     }
 
-    InequalityConstrainedProblem<X + 1, P, M> phase_one_problem;
-
-    phase_one_problem.objective = [](const Matrix<X + 1>& x)
-    {
-        Matrix<1> cost;
-        cost(0) = x(X);
-        return cost;
-    };
-
-    phase_one_problem.equality_constraints = [&problem](const Matrix<X + 1>& x)
-    { return problem.equality_constraints(x.template view<0, X, 0, 1>()); };
-
-    phase_one_problem.inequality_constraints = [&problem](const Matrix<X + 1>& x)
-    { return problem.inequality_constraints(x.template view<0, X, 0, 1>()) - x(X); };
-
-    return solve(phase_one_problem, phase_one_initial_guess).template view<0, X, 0, 1>();
+    return solve(PhaseOneProblem(problem), phase_one_initial_guess).template view<0, X, 0, 1>();
 }
 
 }  // namespace tiny_sqp_solver

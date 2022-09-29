@@ -3,9 +3,6 @@
 #include <math.h>
 #include <stdlib.h>
 
-#include <numeric>
-#include <string>
-
 #include "matrix.h"
 
 namespace tiny_sqp_solver
@@ -16,9 +13,17 @@ struct LUDecomposition
     bool singular = false;
     double parity = 1.0;
     Matrix<N, N> LU;
-    std::array<int, N> permutation;
+    int permutation[N];
 
-    LUDecomposition(const Matrix<N, N> &mat) : LU(mat) { std::iota(permutation.begin(), permutation.end(), 0); }
+    LUDecomposition(const Matrix<N, N> &mat) : LU(mat)
+    {
+        permutation[0] = 0;
+
+        for (int i = 1; i < N; ++i)
+        {
+            permutation[i] = permutation[i - 1] + 1;
+        }
+    }
 };
 
 template <int N>
@@ -30,7 +35,7 @@ LUDecomposition<N> lu_decompose(const Matrix<N, N> &mat)
     auto &LU = decomp.LU;
 
     // row_scale stores the implicit scaling of each row
-    std::array<double, N> row_scale;
+    double row_scale[N];
 
     // Loop over rows to get the implicit scaling information.
     for (int i = 0; i < N; ++i)

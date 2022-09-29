@@ -1,7 +1,7 @@
 #pragma once
 
+#include <cassert>
 #include <cmath>
-#include <iostream>
 
 namespace tiny_sqp_solver
 {
@@ -282,22 +282,4 @@ double norm(const MatrixBase<MatType, Rows, Cols> &mat)
     return std::sqrt(sum);
 }
 
-template <typename DerivedType, int Rows, int Cols>
-std::ostream &operator<<(std::ostream &strm, const MatrixBase<DerivedType, Rows, Cols> &mat)
-{
-    strm << '[';
-
-    for (int i = 0; i < Rows; ++i)
-    {
-        strm << '[';
-
-        for (int j = 0; j < Cols; ++j)
-        {
-            strm << mat(i, j) << ((j == Cols - 1) ? ']' : ',');
-        }
-
-        strm << (i == Rows - 1 ? ']' : ',');
-    }
-    return strm;
-}
 }  // namespace tiny_sqp_solver

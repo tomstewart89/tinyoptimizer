@@ -1,14 +1,14 @@
 #pragma once
 
-#include <functional>
-
+#include "functional.h"
 #include "matrix.h"
 
 namespace tiny_sqp_solver
 {
+
 template <int Inputs, int Outputs>
-Matrix<Inputs, Outputs> differentiate(const std::function<Matrix<Outputs>(const Matrix<Inputs> &)> f,
-                                      const Matrix<Inputs> &x, double epsilon = 1e-5)
+Matrix<Inputs, Outputs> differentiate(const Function<Inputs, Outputs> &f, const Matrix<Inputs> &x,
+                                      double epsilon = 1e-5)
 {
     Matrix<Inputs, Outputs> D;
     Matrix<Inputs> perturbation = Zeros<Inputs>();
@@ -32,10 +32,19 @@ Matrix<Inputs, Outputs> differentiate(const std::function<Matrix<Outputs>(const 
 }
 
 template <int Inputs>
-Matrix<Inputs, Inputs> twice_differentiate(const std::function<Matrix<1>(const Matrix<Inputs> &)> f,
-                                           const Matrix<Inputs> &x, double epsilon = 1e-5)
+struct DifferentiatedFunction : public Function<Inputs, Inputs>
 {
-    return differentiate<Inputs, Inputs>([&f](const Matrix<Inputs> &x) { return differentiate<Inputs, 1>(f, x); }, x);
+    const Function<Inputs, 1> &f_;
+
+    DifferentiatedFunction(const Function<Inputs, 1> &f) : f_(f) {}
+
+    Matrix<Inputs> operator()(const Matrix<Inputs> &input) const override { return differentiate(f_, input); }
+};
+
+template <int Inputs>
+Matrix<Inputs, Inputs> twice_differentiate(const Function<Inputs, 1> &f, const Matrix<Inputs> &x, double epsilon = 1e-5)
+{
+    return differentiate<Inputs, Inputs>(DifferentiatedFunction<Inputs>(f), x);
 }
 
 };  // namespace tiny_sqp_solver
