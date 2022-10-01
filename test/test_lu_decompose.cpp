@@ -2,7 +2,7 @@
 
 #include "lu_decompose.h"
 
-using namespace tiny_sqp_solver;
+using namespace tinyoptimizer;
 
 TEST(LUDecompose, Decompose)
 {

@@ -3,7 +3,7 @@
 #include "functional.h"
 #include "matrix.h"
 
-namespace tiny_sqp_solver
+namespace tinyoptimizer
 {
 
 template <int Inputs, int Outputs>
@@ -47,4 +47,4 @@ Matrix<Inputs, Inputs> twice_differentiate(const Function<Inputs, 1> &f, const M
     return differentiate<Inputs, Inputs>(DifferentiatedFunction<Inputs>(f), x);
 }
 
-};  // namespace tiny_sqp_solver
+};  // namespace tinyoptimizer

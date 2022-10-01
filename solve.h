@@ -1,7 +1,7 @@
 #include "finite_difference.h"
 #include "lu_decompose.h"
 
-namespace tiny_sqp_solver
+namespace tinyoptimizer
 {
 
 template <int X, int P>
@@ -169,4 +169,4 @@ Matrix<X> solve_strictly_feasible(const Problem<X, P, M>& problem, const Matrix<
     return solve(PhaseOneProblem(problem), phase_one_initial_guess).template view<0, X, 0, 1>();
 }
 
-}  // namespace tiny_sqp_solver
+}  // namespace tinyoptimizer

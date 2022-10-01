@@ -3,7 +3,7 @@
 #include <cassert>
 #include <cmath>
 
-namespace tiny_sqp_solver
+namespace tinyoptimizer
 {
 template <typename RefType, int Rows, int Cols = 1>
 class MatrixRef;
@@ -282,4 +282,4 @@ double norm(const MatrixBase<MatType, Rows, Cols> &mat)
     return std::sqrt(sum);
 }
 
-}  // namespace tiny_sqp_solver
+}  // namespace tinyoptimizer

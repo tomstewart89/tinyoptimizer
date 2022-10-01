@@ -2,7 +2,7 @@
 
 #include "matrix.h"
 
-using namespace tiny_sqp_solver;
+using namespace tinyoptimizer;
 
 TEST(Matrix, Multiplication)
 {

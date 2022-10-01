@@ -5,7 +5,7 @@
 
 #include "matrix.h"
 
-namespace tiny_sqp_solver
+namespace tinyoptimizer
 {
 template <int N>
 struct LUDecomposition
@@ -156,4 +156,4 @@ Matrix<N> lu_solve(const LUDecomposition<N> &decomp, const Matrix<N> &b)
     return x;
 }
 
-}  // namespace tiny_sqp_solver
+}  // namespace tinyoptimizer

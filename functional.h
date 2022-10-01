@@ -2,7 +2,7 @@
 
 #include "matrix.h"
 
-namespace tiny_sqp_solver
+namespace tinyoptimizer
 {
 template <int Inputs, int Outputs>
 struct Function
@@ -37,4 +37,4 @@ class MemberFunction : public Function<Inputs, Outputs>
     Matrix<Outputs> operator()(const Matrix<Inputs> &input) const override { return (obj_.*f_)(input); }
 };
 
-};  // namespace tiny_sqp_solver
+};  // namespace tinyoptimizer

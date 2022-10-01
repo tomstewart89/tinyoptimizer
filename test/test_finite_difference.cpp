@@ -2,7 +2,7 @@
 
 #include "finite_difference.h"
 
-using namespace tiny_sqp_solver;
+using namespace tinyoptimizer;
 
 TEST(FiniteDifference, Univariate)
 {
