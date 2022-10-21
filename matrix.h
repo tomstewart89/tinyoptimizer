@@ -1,8 +1,5 @@
 #pragma once
 
-#include <cassert>
-#include <cmath>
-
 #include "Arduino.h"
 
 namespace tinyoptimizer
@@ -20,17 +17,9 @@ struct MatrixBase
     constexpr static int rows = Rows;
     constexpr static int cols = Cols;
 
-    double &operator()(int i, int j = 0)
-    {
-        assert(i < Rows && j < Cols);
-        return static_cast<DerivedType *>(this)->operator()(i, j);
-    }
+    double &operator()(int i, int j = 0) { return static_cast<DerivedType *>(this)->operator()(i, j); }
 
-    double operator()(int i, int j = 0) const
-    {
-        assert(i < Rows && j < Cols);
-        return static_cast<const DerivedType *>(this)->operator()(i, j);
-    }
+    double operator()(int i, int j = 0) const { return static_cast<const DerivedType *>(this)->operator()(i, j); }
 
     template <typename MatType>
     DerivedType &operator=(const MatrixBase<MatType, Rows, Cols> &mat)
@@ -94,21 +83,6 @@ class Matrix : public MatrixBase<Matrix<Rows, Cols>, Rows, Cols>
     double operator()(int i, int j = 0) const { return storage[i * Cols + j]; }
 
     Matrix() = default;
-
-    Matrix(std::initializer_list<double> init)
-    {
-        assert(init.size() == Rows * Cols);
-
-        auto it = init.begin();
-
-        for (int i = 0; i < Rows; ++i)
-        {
-            for (int j = 0; j < Cols; ++j)
-            {
-                (*this)(i, j) = *(it++);
-            }
-        }
-    }
 
     template <typename DerivedType>
     Matrix(const MatrixBase<DerivedType, Rows, Cols> &mat)

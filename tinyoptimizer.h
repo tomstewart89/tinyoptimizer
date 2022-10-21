@@ -166,7 +166,7 @@ Matrix<X> solve_strictly_feasible(const Problem<X, P, M>& problem, const Matrix<
         phase_one_initial_guess(X) = max(phase_one_initial_guess(X), residuals(i));
     }
 
-    return solve(PhaseOneProblem(problem), phase_one_initial_guess).template view<0, X, 0, 1>();
+    return solve(PhaseOneProblem<X, P, M>(problem), phase_one_initial_guess).template view<0, X, 0, 1>();
 }
 
 }  // namespace tinyoptimizer
