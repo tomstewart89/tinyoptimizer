@@ -8,7 +8,7 @@ TEST(FiniteDifference, Univariate)
 {
     Matrix<1> p = {1.0};
 
-    NonMemberFunction<1, 1> f([](const Matrix<1>& x) { return Matrix<1>{std::exp(x(0))}; });
+    NonMemberFunction<1, 1> f([](const Matrix<1>& x) { return Matrix<1>{exp(x(0))}; });
 
     auto f_dot = differentiate<1, 1>(f, p);
     auto f_ddot = twice_differentiate<1>(f, p);
@@ -16,12 +16,12 @@ TEST(FiniteDifference, Univariate)
     EXPECT_NEAR(f_dot(0), f(p)(0), 1e-3);
     EXPECT_NEAR(f_ddot(0), f(p)(0), 1e-3);
 
-    NonMemberFunction<1, 1> g([](const Matrix<1>& x) { return Matrix<1>{std::sin(x(0))}; });
+    NonMemberFunction<1, 1> g([](const Matrix<1>& x) { return Matrix<1>{sin(x(0))}; });
     auto g_dot = differentiate<1, 1>(g, p);
     auto g_ddot = twice_differentiate<1>(g, p);
 
-    EXPECT_NEAR(g_dot(0), std::cos(p(0)), 1e-3);
-    EXPECT_NEAR(g_ddot(0), -std::sin(p(0)), 1e-3);
+    EXPECT_NEAR(g_dot(0), cos(p(0)), 1e-3);
+    EXPECT_NEAR(g_ddot(0), -sin(p(0)), 1e-3);
 }
 
 TEST(FiniteDifference, Multivariate)

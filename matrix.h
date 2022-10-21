@@ -3,6 +3,8 @@
 #include <cassert>
 #include <cmath>
 
+#include "Arduino.h"
+
 namespace tinyoptimizer
 {
 template <typename RefType, int Rows, int Cols = 1>
@@ -86,7 +88,7 @@ template <int Rows, int Cols = 1>
 class Matrix : public MatrixBase<Matrix<Rows, Cols>, Rows, Cols>
 {
    public:
-    std::array<double, Rows * Cols> storage;
+    double storage[Rows * Cols];
 
     double &operator()(int i, int j = 0) { return storage[i * Cols + j]; }
     double operator()(int i, int j = 0) const { return storage[i * Cols + j]; }
@@ -275,11 +277,31 @@ double norm(const MatrixBase<MatType, Rows, Cols> &mat)
     {
         for (int j = 0; j < Cols; ++j)
         {
-            sum += std::pow(mat(i, j), 2);
+            sum += pow(mat(i, j), 2);
         }
     }
 
-    return std::sqrt(sum);
+    return sqrt(sum);
+}
+
+template <typename DerivedType, int Rows, int Cols>
+Print &operator<<(Print &strm, const MatrixBase<DerivedType, Rows, Cols> &mat)
+{
+    strm.print('[');
+
+    for (int i = 0; i < Rows; ++i)
+    {
+        strm.print('[');
+
+        for (int j = 0; j < Cols; ++j)
+        {
+            strm.print(mat(i, j));
+            strm.print((j == Cols - 1) ? ']' : ',');
+        }
+
+        strm.print(i == Rows - 1 ? ']' : ',');
+    }
+    return strm;
 }
 
 }  // namespace tinyoptimizer

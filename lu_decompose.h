@@ -42,7 +42,7 @@ LUDecomposition<N> lu_decompose(const Matrix<N, N> &mat)
     {
         for (int j = 0; j < N; ++j)
         {
-            row_scale[i] = std::max(std::fabs(LU(i, j)), row_scale[i]);
+            row_scale[i] = max(fabs(LU(i, j)), row_scale[i]);
         }
 
         if (row_scale[i] == 0.0)
@@ -79,7 +79,7 @@ LUDecomposition<N> lu_decompose(const Matrix<N, N> &mat)
 
         for (int i = j; i < N; i++)
         {
-            double this_pivot = std::fabs(LU(i, j)) / row_scale[i];
+            double this_pivot = fabs(LU(i, j)) / row_scale[i];
 
             if (this_pivot >= largest_pivot)
             {
@@ -92,12 +92,12 @@ LUDecomposition<N> lu_decompose(const Matrix<N, N> &mat)
         {
             for (int k = 0; k < N; ++k)
             {
-                std::swap(LU(largest_pivot_idx, k), LU(j, k));
+                swap(LU(largest_pivot_idx, k), LU(j, k));
             }
 
             decomp.parity = -decomp.parity;
 
-            std::swap(idx[j], idx[largest_pivot_idx]);
+            swap(idx[j], idx[largest_pivot_idx]);
             row_scale[largest_pivot_idx] = row_scale[j];
         }
 

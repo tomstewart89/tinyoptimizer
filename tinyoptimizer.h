@@ -96,7 +96,7 @@ class BarrierProblem : public Problem<X, P, 0>
 
         for (int i = 0; i < M; ++i)
         {
-            cost(0) -= std::log(-residuals(i));
+            cost(0) -= log(-residuals(i));
         }
 
         return cost;
@@ -163,7 +163,7 @@ Matrix<X> solve_strictly_feasible(const Problem<X, P, M>& problem, const Matrix<
 
     for (int i = 0; i < M; ++i)
     {
-        phase_one_initial_guess(X) = std::max(phase_one_initial_guess(X), residuals(i));
+        phase_one_initial_guess(X) = max(phase_one_initial_guess(X), residuals(i));
     }
 
     return solve(PhaseOneProblem(problem), phase_one_initial_guess).template view<0, X, 0, 1>();

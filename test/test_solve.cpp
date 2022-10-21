@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "solve.h"
+#include "tinyoptimizer.h"
 
 using namespace tinyoptimizer;
 
@@ -61,8 +61,8 @@ TEST(Solve, KhanAcademyLagrangeMultiplierExample)
 
     auto x_star = solve(KhanAcademyLagrangeMultiplierProblem(), initial_guess);
 
-    EXPECT_NEAR(x_star(0), std::sqrt(2.0 / 3.0), 1e-3);
-    EXPECT_NEAR(x_star(1), std::sqrt(1.0 / 3.0), 1e-3);
+    EXPECT_NEAR(x_star(0), sqrt(2.0 / 3.0), 1e-3);
+    EXPECT_NEAR(x_star(1), sqrt(1.0 / 3.0), 1e-3);
 }
 
 template <int NumConstraints>
@@ -79,12 +79,13 @@ struct QuadraticProgram : public Problem<2, 0, NumConstraints>
 
         for (int i = 0; i < NumConstraints; ++i)
         {
-            residuals(i) = x(0) * std::cos(2 * M_PI * i / NumConstraints / 2.0) +
-                           x(1) * std::sin(2 * M_PI * i / NumConstraints / 2.0) - 1.0;
+            residuals(i) =
+                x(0) * cos(2 * M_PI * i / NumConstraints / 2.0) + x(1) * sin(2 * M_PI * i / NumConstraints / 2.0) - 1.0;
         }
         return residuals;
     }
 };
+
 TEST(Solve, QP)
 {
     Matrix<2> initial_guess = {0.0, 0.0};
@@ -104,7 +105,7 @@ struct LuksanVlcek1Problem : public Problem<N, N - 2, N * 2>
 
         for (int i = 0; i < N - 1; ++i)
         {
-            cost(0) += 100 * std::pow(std::pow(x(i), 2) - x(i + 1), 2) + std::pow(x(i) - 1, 2);
+            cost(0) += 100 * pow(pow(x(i), 2) - x(i + 1), 2) + pow(x(i) - 1, 2);
         }
 
         cost(0) = x(0) * x(3) * (x(0) + x(1) + x(2)) + x(2);
@@ -117,9 +118,9 @@ struct LuksanVlcek1Problem : public Problem<N, N - 2, N * 2>
 
         for (int i = 0; i < N - 2; ++i)
         {
-            residuals(i) = 3 * std::pow(x(i + 1), 3) + 2 * x(i + 2) - 5 +
-                           std::sin(x(i + 1) - x(i + 2)) * std::sin(x(i + 1) + x(i + 2)) + 4 * x(i + 1) -
-                           x(i) * std::exp(x(i) - x(i + 1)) - 3;
+            residuals(i) = 3 * pow(x(i + 1), 3) + 2 * x(i + 2) - 5 +
+                           sin(x(i + 1) - x(i + 2)) * sin(x(i + 1) + x(i + 2)) + 4 * x(i + 1) -
+                           x(i) * exp(x(i) - x(i + 1)) - 3;
         }
 
         return residuals;
